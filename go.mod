@@ -1,4 +1,4 @@
-module cron
+module github.com/journey-c/cron
 
 go 1.13
 
