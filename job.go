@@ -83,7 +83,7 @@ func (j *job) updateNextTime() {
 			continue
 		}
 		// day
-		for (1<<(t.Day()-1))&j.cronExpr.day == 0 || (1<<(uint(t.Weekday())-1))&j.cronExpr.week == 0 {
+		for (1<<(t.Day()-1))&j.cronExpr.day == 0 || (1<<(uint(t.Weekday())))&j.cronExpr.week == 0 {
 			t = t.AddDate(0, 0, 1)
 			if operated == false {
 				t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
@@ -252,7 +252,7 @@ func parseExpression(expr string) (*cronExpression, error) {
 	if ce.month = parseUnit(fields[4], 12, -1, monAry, false); ce.month == 0 {
 		return nil, fmt.Errorf("bad %s: %s", "month", fields[4])
 	}
-	if ce.week = parseUnit(fields[5], 8, 0, dowAry, true); ce.week == 0 {
+	if ce.week = parseUnit(fields[5], 7, 0, dowAry, true); ce.week == 0 {
 		return nil, fmt.Errorf("bad %s: %s", "week", fields[5])
 	}
 	return ce, nil

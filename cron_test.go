@@ -36,19 +36,21 @@ func TestCron(t *testing.T) {
 		}
 	}
 
-	time.Sleep(time.Second * 5)
+	// time.Sleep(time.Second * 5)
 
 	cron.Start()
 
-	go func() {
-		for {
-			time.Sleep(time.Second)
-			if err := cron.JobAdd("* * * * * *", test1); err != nil {
-				t.Log(err.Error())
-				return
-			}
-		}
-	}()
+	fmt.Println("=== Start ===")
+
+	// go func() {
+	// for {
+	// time.Sleep(time.Second)
+	// if err := cron.JobAdd("* * * * * *", test1); err != nil {
+	// t.Log(err.Error())
+	// return
+	// }
+	// }
+	// }()
 
 	time.Sleep(300 * time.Second)
 
@@ -79,7 +81,8 @@ func printUint64(a uint64) {
 }
 
 func TestObtainCronExpression(t *testing.T) {
-	ce, err := obtainCronExpression("0-9,20-29/2,40-49 0,10,20,30,40,50 * 1 aug *")
+	// ce, err := obtainCronExpression("0-9,20-29/2,40-49 0,10,20,30,40,50 * 1 aug *")
+	ce, err := obtainCronExpression("* * * * * *")
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -102,7 +105,7 @@ func TestNextTime(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	j, err := obtainJob("* * * * * *", funcName, HelloWorld)
+	j, err := obtainJob("* * * * * 0", funcName, HelloWorld)
 	if err != nil {
 		t.Error(err.Error())
 		return
