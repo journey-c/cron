@@ -3,7 +3,6 @@ package cron
 import (
 	"container/list"
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
@@ -187,7 +186,6 @@ func (c *Cron) Start() {
 		c.jobRecordLock.Lock()
 		j := c.jobList.Remove(c.jobList.Front()).(*job) // can't be nil
 		j.updateNextTime()
-		fmt.Println(j.nextTime.String())
 		c.jobAdd(j)
 		c.jobRecordLock.Unlock()
 	}
