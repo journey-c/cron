@@ -56,8 +56,8 @@ func obtainJob(expr, cmdName string, cmd func()) (*job, error) {
 	}, nil
 }
 
-func (j *job) updateNextTime() {
-	now := time.Now().Add(time.Second - time.Nanosecond) // deviation
+func (j *job) updateNextTime(now time.Time) {
+	now = now.Add(time.Second - time.Nanosecond) // deviation
 
 	t := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), 0, now.Location())
 	yearLimit := now.Year() + 5 // leap year

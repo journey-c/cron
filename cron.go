@@ -28,6 +28,7 @@ type Cron struct {
 	jobListLock sync.RWMutex
 
 	stopChan   chan struct{}
+	addChan    chan *job
 	statusLock sync.RWMutex
 	status     int32
 }
@@ -49,6 +50,7 @@ func NewCron() *Cron {
 			}, true),
 		jobList:  list.New(),
 		stopChan: make(chan struct{}),
+		addChan:  make(chan *job, 10),
 		status:   statusInitial,
 	}
 	return c
@@ -80,12 +82,7 @@ func (c *Cron) JobAdd(expr string, cmd CmdCron) error {
 		c.jobListLock.Unlock()
 		return nil
 	case statusRunning:
-		c.jobRecordLock.Lock()
-		j.updateNextTime()
-		if err = c.jobAdd(j); err != nil {
-			return err
-		}
-		c.jobRecordLock.Unlock()
+		c.addChan <- j
 		return nil
 	default:
 		return errors.New("invalid status")
@@ -140,7 +137,7 @@ func (c *Cron) JobRemove(expr string, cmd func()) error {
 
 		c.jobRecordLock.Lock()
 		defer c.jobRecordLock.Unlock()
-		j.updateNextTime()
+		j.updateNextTime(time.Now())
 		var jobList *list.List
 		jobNodeList := c.jobRecord.Find(j.nextTime)
 		switch len(jobNodeList) {
@@ -185,7 +182,7 @@ func (c *Cron) Start() {
 	for c.jobList.Len() != 0 {
 		c.jobRecordLock.Lock()
 		j := c.jobList.Remove(c.jobList.Front()).(*job) // can't be nil
-		j.updateNextTime()
+		j.updateNextTime(time.Now())
 		c.jobAdd(j)
 		c.jobRecordLock.Unlock()
 	}
@@ -214,15 +211,22 @@ func (c *Cron) schedule() {
 					continue
 				}
 				go item.Value.(*job).cmd()
-				j.updateNextTime()
+				j.updateNextTime(time.Now())
 				_ = c.jobAdd(j)
 			}
 			c.jobRecord.DeleteByKey(oldKey)
 			c.jobRecordLock.Unlock()
+		case j := <-c.addChan:
+			c.jobRecordLock.RLock()
+			j.updateNextTime(time.Now())
+			_ = c.jobAdd(j)
+			c.jobRecordLock.RUnlock()
 		case <-c.stopChan:
 			c.jobRecordLock.Lock()
 			c.jobRecord = nil
 			c.jobRecordLock.Unlock()
+			close(c.stopChan)
+			close(c.addChan)
 			return
 		}
 	}

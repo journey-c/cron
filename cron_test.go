@@ -17,42 +17,24 @@ func test2() {
 func TestCron(t *testing.T) {
 	cron := NewCron()
 
-	for i := 0; i < 1000; i++ {
-		if err := cron.JobAdd("* * * * * *", test1); err != nil {
-			t.Log(err.Error())
-			return
-		}
-	}
-
-	if err := cron.JobAdd("* * * * * *", test2); err != nil {
+	if err := cron.JobAdd("*/10 * * * * *", test2); err != nil {
 		t.Log(err.Error())
 		return
 	}
-
-	for i := 0; i < 1000; i++ {
-		if err := cron.JobRemove("* * * * * *", test1); err != nil {
-			t.Log(err.Error())
-			return
-		}
-	}
-
-	// time.Sleep(time.Second * 5)
 
 	cron.Start()
 
 	fmt.Println("=== Start ===")
 
-	// go func() {
-	// for {
-	// time.Sleep(time.Second)
-	// if err := cron.JobAdd("* * * * * *", test1); err != nil {
-	// t.Log(err.Error())
-	// return
-	// }
-	// }
-	// }()
+	go func() {
+		time.Sleep(time.Second * 5)
+		if err := cron.JobAdd("* * * * * *", test1); err != nil {
+			t.Log(err.Error())
+			return
+		}
+	}()
 
-	time.Sleep(300 * time.Second)
+	time.Sleep(60 * time.Second)
 
 	cron.Stop()
 
@@ -105,11 +87,18 @@ func TestNextTime(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	j, err := obtainJob("* * * * * 0", funcName, HelloWorld)
+	j, err := obtainJob("0 30 */2 * * *", funcName, HelloWorld)
 	if err != nil {
 		t.Error(err.Error())
 		return
 	}
-	j.updateNextTime()
-	fmt.Println("时间:", j.nextTime.String())
+	for h := 0; h < 24; h++ {
+		for m := 0; m < 60; m++ {
+			for s := 0; s < 60; s += 10 {
+				now := time.Date(2020, time.Month(12), 28, h, m, s, 0, time.Now().Location())
+				j.updateNextTime(now)
+				fmt.Println("现在:", now.String(), "下次:", j.nextTime.String())
+			}
+		}
+	}
 }
